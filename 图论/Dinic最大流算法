@@ -1,0 +1,81 @@
+/*luogu P3376 【模板】网络最大流*/
+int head[N],nex[M],ver[M],tot;
+ll edge[M];
+int n,m,s,t;
+ll maxflow;
+ll deep[N];//层级数，其实应该是level
+int now[M];//当前弧优化
+queue<int>q;
+
+inline void read(int &x){
+    int f=0;x=0;char c=getchar();
+    while(c<'0'||c>'9')f|=c=='-',c=getchar();
+    while(c>='0'&&c<='9')x=(x<<1)+(x<<3)+(c^48),c=getchar();
+    x=f?-x:x;
+}
+
+inline void add(int x,int y,int z){//建正边和反向边
+    ver[tot] = y;edge[tot] = z;nex[tot] = head[x];head[x] = tot ++ ;
+    ver[tot] = x;edge[tot] = 0;nex[tot] = head[y];head[y] = tot ++ ;
+}
+
+inline bool bfs(){//在残量网络中构造分层图
+//注意这个n，应该是实际的总点数，加上S和T的总点数，这里很容易出错
+    for(int i = 1; i <= n; ++ i)
+    	deep[i] = INF;
+    while(!q.empty())q.pop();
+    q.push(s);deep[s] = 0;now[s] = head[s];//一些初始化
+    while(!q.empty()){
+        int x = q.front();q.pop();
+        for(int i = head[x];~i;i = nex[i]){
+            int y = ver[i];
+            if(edge[i] > 0 && deep[y] == INF){//没走过且剩余容量大于0
+                q.push(y);
+                now[y] = head[y];//先初始化，暂时都一样
+                deep[y] = deep[x] + 1;
+                if(y == t)return 1;//找到了
+            }
+        }
+    }
+    return 0;
+}
+
+//flow是整条增广路对最大流的贡献，rest是当前最小剩余容量，用rest去更新flow
+ll dfs(int x,ll flow){//在当前分层图上增广
+    if(x == t)return flow;
+    ll ans = 0,k,i;
+    for(i = now[x];~i && flow;i = nex[i]){
+        now[x] = i;//当前弧优化（避免重复遍历从x出发的不可拓展的边）
+        int y = ver[i];
+        if(edge[i] > 0 && (deep[y] == deep[x] + 1)){//必须是下一层并且剩余容量大于0
+            k = dfs(y,min(flow,edge[i]));//取最小
+            if(!k)deep[y] = INF;//剪枝，去掉增广完毕的点
+            edge[i] -= k;//回溯时更新
+            edge[i ^ 1] += k;//成对变换
+            ans += k;
+            flow -= k;
+        }
+        //if(!flow)return rest;
+    }
+
+    return ans;
+}
+
+void dinic(){
+    while(bfs())
+        maxflow += dfs(s,INF);
+}
+
+int main()
+{
+    read(n);read(m);read(s);read(t);
+    memset(head, -1, sizeof head);
+    over(i,1,m){
+        int x,y,z;
+        read(x);read(y);read(z);
+        add(x,y,z);
+    }
+    dinic();
+    printf("%lld\n",maxflow);
+    return 0;
+}

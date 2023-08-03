@@ -1,13 +1,13 @@
 #include <bits/stdc++.h>
 using namespace std;
 typedef long long ll;
-typedef pair<ll, ll> pii;
-const ll mn = 2e5 + 10;
+const ll mn = 3e3 + 10;
 const ll inf = 1e10;
-ll t,n,m,s,a,b,c,d[mn],vis[mn];
+ll d[mn],vis[mn],pre[mn];
 struct ain {
-    ll v, w;
+    ll v,w;
 };
+ll n,m,k;
 vector<ain>nod[mn];
 priority_queue<pair<ll,ll>>q;
 void dj(ll s)
@@ -26,29 +26,16 @@ void dj(ll s)
             if (d[v]>d[u]+w)
             {
                 d[v]=d[u]+w;
+                pre[v]=u;
                 q.push({ -d[v],v});
             }
         }
     }
 }
-
-void solve()
+//输出路径方案
+void dfs(ll u,ll s)//s表示起点
 {
-    cin >> n >> m >> s;
-    for (ll i = 1; i <= m; i++)
-    {
-        cin >> a >> b >> c;
-        nod[a].push_back({b,c});
-    }   
-
-  
-}
-signed main()
-{
-    ios::sync_with_stdio(false);cin.tie(0);
-    t = 1;
-    while (t--)
-    {
-        solve();
-    }
+    if(u==s) {cout<<u<<" ";return;}
+    dfs(pre[u],s);
+    cout<<u<<" ";
 }

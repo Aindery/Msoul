@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef pair<ll, ll> pii;
+const ll mn = 2e5 + 10;
+const ll inf = 1e10;
+ll t,n,m,s,a,b,c,d[mn],vis[mn];
+struct ain {
+    ll v, w;
+};
+vector<ain>nod[mn];
+priority_queue<pair<ll,ll>>q;
+void dj(ll s)
+{
+    for (ll i = 0; i <= n; i++) d[i] = inf;
+    d[s] = 0; q.push({ 0,s });
+    while (q.size())
+    {
+        auto t=q.top(); q.pop();
+        ll u = t.second;
+        if (vis[u]) continue;
+        vis[u] = 1;
+        for (auto ed : nod[u])
+        {
+            ll v = ed.v, w = ed.w;
+            if (d[v]>d[u]+w)
+            {
+                d[v]=d[u]+w;
+                q.push({ -d[v],v});
+            }
+        }
+    }
+}
+
+void solve()
+{
+    cin >> n >> m >> s;
+    for (ll i = 1; i <= m; i++)
+    {
+        cin >> a >> b >> c;
+        nod[a].push_back({b,c});
+    }   
+
+  
+}
+signed main()
+{
+    ios::sync_with_stdio(false);cin.tie(0);
+    t = 1;
+    while (t--)
+    {
+        solve();
+    }
+}

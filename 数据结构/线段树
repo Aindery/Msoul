@@ -1,0 +1,166 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const ll mn=1e5+10;
+const ll inf=1e10;
+ll mod;
+#define lc p<<1
+#define rc p<<1|1
+struct ain
+{
+    ll l,r,sum,sum2,tag1,tag2;
+};
+ll a[mn];
+ain operator+(const ain&a,const ain&b)
+{
+    ain c;
+    c.l=a.l;
+    c.r=b.r;
+    c.tag1=1;
+    c.tag2=0;
+    c.sum=(a.sum+b.sum)%mod;
+    c.sum2 = (a.sum2 + b.sum2+(a.sum * b.sum % mod)%mod)%mod;
+    return c;
+}
+struct segtree
+{
+    ain nod[4*mn];
+    ll mp[mn];
+
+    void pushup(ll p)
+    {
+        pushdown(lc);
+        pushdown(rc);
+        nod[p]=nod[lc]+nod[rc];
+    }
+    void init_lazy(ll p)
+    {
+        nod[p].tag1=1;
+        nod[p].tag2=0;
+    }
+    void cal_lazy(ll p)
+    {
+        ll len=(nod[p].r-nod[p].l+1)%mod;
+        nod[p].sum2=((nod[p].tag1*nod[p].tag1%mod*nod[p].sum2%mod)%mod
+        +(nod[p].tag1*nod[p].tag2%mod*(len-1)%mod*nod[p].sum%mod)%mod
+        +((len-1)*(len)/2%mod*nod[p].tag2%mod*nod[p].tag2%mod)%mod)%mod;
+        nod[p].sum=(len*nod[p].tag2%mod+
+                    nod[p].tag1*nod[p].sum%mod)%mod;
+    }
+    void union_lazy(ll fa,ll ch)
+    {
+        ll tem1,tem2;
+        tem1=nod[fa].tag1*nod[ch].tag1%mod;
+        tem2=(nod[fa].tag1*nod[ch].tag2%mod+nod[fa].tag2)%mod;
+        nod[ch].tag1=tem1;
+        nod[ch].tag2=tem2;
+    }
+    void pushdown(ll p)
+    {
+        if(nod[p].tag1!=1||nod[p].tag2!=0)
+        {
+            cal_lazy(p);
+            if(nod[p].l!=nod[p].r)
+            {
+                union_lazy(p,lc);
+                union_lazy(p,rc);
+            }
+            init_lazy(p);
+        }
+    }
+    void build(ll p,ll l,ll r)
+    {
+        nod[p].l=l;
+        nod[p].r=r;
+        init_lazy(p);
+        if(l!=r)
+        {
+            ll mid=l+r>>1;
+            build(lc,l,mid);
+            build(rc,mid+1,r);
+            pushup(p);
+        }
+        else nod[p].sum=a[l]%mod,mp[l]=p,nod[p].sum2=0;
+    }
+    ll sum(ll p,ll l,ll r)
+    {
+        pushdown(p);
+        if(nod[p].l==l&&nod[p].r==r) return nod[p].sum;
+        ll mid=nod[p].l+nod[p].r>>1;
+        if(r<=mid) return sum(lc,l,r);
+        else if(l>mid) return sum(rc,l,r);
+        else return sum(lc,l,mid)+sum(rc,mid+1,r);
+    }
+    ain sum2(ll p,ll l,ll r)
+    {
+        pushdown(p);
+        if(nod[p].l==l&&nod[p].r==r) return nod[p];
+        ll mid=nod[p].l+nod[p].r>>1;
+        if(r<=mid) return sum2(lc,l,r);
+        else if(l>mid) return sum2(rc,l,r);
+        else return sum2(lc,l,mid)+sum2(rc,mid+1,r);
+    }
+    void update(ll x,ll y)
+    {
+        x=mp[x];
+        nod[x].sum+=y;
+        while(x/=2) pushup(x);
+    }
+    void change(ll p,ll l,ll r,ll tag1,ll tag2)
+    {
+        pushdown(p);
+        if(nod[p].l==l&&nod[p].r==r)
+        {
+            nod[p].tag1=tag1%mod;
+            nod[p].tag2=tag2%mod;
+            return;;
+            
+        }
+        ll mid=nod[p].l+nod[p].r>>1;
+        if(r<=mid) change(lc,l,r,tag1,tag2);
+        else if(l>mid) change(rc,l,r,tag1,tag2);
+        else change(lc,l,mid,tag1,tag2),change(rc,mid+1,r,tag1,tag2);
+        pushup(p);
+    }
+};
+segtree tr;
+void solve()
+{
+    ll n,m,pe;
+    cin>>n>>m>>pe;
+    mod=pe;
+
+    for(ll i=1; i<=n; i++) cin>>a[i];
+    tr.build(1,1,n);
+    for(ll i=1; i<=m; i++)
+    {
+        ll op,l,r,v;
+        cin>>op;
+        if(op==1)
+        {
+            cin>>l>>r>>v;
+            tr.change(1,l,r,1,v);
+        }
+        else if(op==2)
+        {
+            cin>>l>>r>>v;
+            tr.change(1,l,r,v,0);
+        }
+        else
+        {
+            cin>>l>>r;
+            cout<<tr.sum2(1,l,r).sum2<<'\n';
+        }
+
+    }
+}
+signed main()
+{
+    ios::sync_with_stdio(false);cin.tie(0);cout.tie(0);
+    ll tt;
+    cin>>tt;
+    while(tt--)
+    {
+        solve();
+    }
+}

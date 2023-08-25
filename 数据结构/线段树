@@ -33,11 +33,13 @@ struct segtree
         pushdown(rc);
         nod[p]=nod[lc]+nod[rc];
     }
+    //1.修改这里
     void init_lazy(ll p)
     {
         nod[p].tag1=1;
         nod[p].tag2=0;
     }
+    //2.修改这里
     void cal_lazy(ll p)
     {
         ll len=(nod[p].r-nod[p].l+1)%mod;
@@ -47,6 +49,7 @@ struct segtree
         nod[p].sum=(len*nod[p].tag2%mod+
                     nod[p].tag1*nod[p].sum%mod)%mod;
     }
+    //3.修改这里
     void union_lazy(ll fa,ll ch)
     {
         ll tem1,tem2;
@@ -55,6 +58,7 @@ struct segtree
         nod[ch].tag1=tem1;
         nod[ch].tag2=tem2;
     }
+    //4.修改这里
     void pushdown(ll p)
     {
         if(nod[p].tag1!=1||nod[p].tag2!=0)

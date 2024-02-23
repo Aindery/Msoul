@@ -1,0 +1,102 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef long double ld;
+const ll mn=1e6+10;
+using i64 = int64_t;
+const ll inf = 1e18;
+template <typename T>
+struct Fenwick {
+    int n;
+    std::vector<T> a;
+
+    Fenwick(int n_ = 0) {
+        init(n_);
+    }
+
+    void init(int n_) {
+        n = n_;
+        a.assign(n, T{});
+    }
+
+    void add(int x, const T &v) {
+        for (int i = x + 1; i <= n; i += i & -i) {
+            a[i - 1] = a[i - 1] + v;
+        }
+    }
+
+    T sum(int x) {
+        T ans{};
+        for (int i = x; i > 0; i -= i & -i) {
+            ans = ans + a[i - 1];
+        }
+        return ans;
+    }
+
+    T rangeSum(int l, int r) {
+        return sum(r) - sum(l);
+    }
+
+    int select(const T &k) {
+        int x = 0;
+        T cur{};
+        for (int i = 1 << std::__lg(n); i; i /= 2) {
+            if (x + i <= n && cur + a[x + i - 1] <= k) {
+                x += i;
+                cur = cur + a[x - 1];
+            }
+        }
+        return x;
+    }
+};
+void solve()
+{
+    ll n;
+    cin>>n;
+    vector<ll>a(n);
+    vector<ll>l(n),r(n);
+    ll ma=-1;
+    for(ll i=0;i<n;i++)
+    {
+        cin>>a[i];
+        ma=max(a[i],ma);
+    }
+    Fenwick<ll> fw(ma),fw2(ma);
+    for(ll i=0;i<n;i++)
+    {
+        ll k=a[i];
+        k-=1;
+        fw.add(k,1);
+        l[i]=fw.rangeSum(0,k);
+    }
+    for(ll i=n-1;i>=0;i--)
+    {
+        ll k=a[i];
+        k-=1;
+        fw2.add(k,1);
+        r[i]=fw2.rangeSum(k+1,ma);
+//        cout<<r[i]<<'\n';
+    }
+    ll res=0;
+    for(ll i=0;i<n;i++)
+    {
+        res+=l[i]*r[i];
+    }
+    cout<<res<<'\n';
+//        for(ll j=0; j<n; j++) cout<<seg.query(j,j+1).l<<" "<<seg.query(j,j+1).r<<" ";
+//        cout<<'\n';
+//        for(ll i=0;i<n;i++) cout<<seg.query(i,i+1).l<<" ";
+//        cout<<'\n';
+
+}
+signed main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    ll tt;
+    //  cin>>tt;
+    tt=1;
+    while(tt--)solve();
+}
+
+

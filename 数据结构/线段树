@@ -1,170 +1,201 @@
-#include <bits/stdc++.h>
+#include<bits/stdc++.h>
 using namespace std;
 typedef long long ll;
-const ll mn=1e5+10;
-const ll inf=1e10;
-ll mod;
-#define lc p<<1
-#define rc p<<1|1
-struct ain
+typedef long double ld;
+const ll mn=1e6+10;
+using i64 = int64_t;
+const ll inf = 1e18;
+struct Tag
 {
-    ll l,r,sum,sum2,tag1,tag2;
+    // 定义要下放什么标记
+    Tag(ll =0):  {} // 初始化
+    void apply(Tag t)
+    {
+        // 怎么用父结点的标记更新儿子的标记
+    }
 };
-ll a[mn];
-ain operator+(const ain&a,const ain&b)
+struct Info
 {
-    ain c;
-    c.l=a.l;
-    c.r=b.r;
-    c.tag1=1;
-    c.tag2=0;
-    c.sum=(a.sum+b.sum)%mod;
-    c.sum2 = (a.sum2 + b.sum2+(a.sum * b.sum % mod)%mod)%mod;
+    // 初始化info存储的信息
+    void apply(Tag t, ll len)
+    {
+        // 怎么用父结点的标记更新儿子存储的信息
+        // 这里 jls 原本没有区间长度 len 这个形参，但我觉得可能常用就自己加上了
+        
+    }
+};
+Info operator+(Info a, Info b)
+{
+    Info c;
+    //    if((a.r^b.l)==1&&a.pre==a.len)
+//    {
+//        c.pre=a.len+b.pre;
+//    }
+//    else c.pre=a.pre;
+//    if((a.r^b.l)==1&&b.suf==b.len)
+//    {
+//        c.suf=a.suf+b.len;
+//    }
+//    else c.suf=b.suf;
+//    c.len=a.len+b.len;
+////    cout<<c.l<<" "<<c.r<<'\n';
+//    c.l=a.l;
+//    c.r=b.r;
+//    // a 和 b 一通操作弄出 c
+//    if((a.r^b.l)==1)
+//    {
+//        c.sum=max(max(a.sum,b.sum),a.suf+b.pre);
+//    }
+//    else c.sum=max(a.sum,b.sum);
     return c;
 }
-struct segtree
+template<class Info, class Tag>
+struct LSGT
 {
-    ain nod[4*mn];
-    ll mp[mn];
-
-    void pushup(ll p)
+#define l(p) (p << 1)
+#define r(p) (p << 1 | 1)
+    ll n;
+    std::vector<Info> info;
+    std::vector<Tag> tag;
+    LSGT() {}
+    LSGT(ll _n, Info _v = Info())
     {
-        pushdown(lc);
-        pushdown(rc);
-        nod[p]=nod[lc]+nod[rc];
+        init(_n, _v);
     }
-    //1.修改这里
-    void init_lazy(ll p)
+    template<class T>
+    LSGT(std::vector<T> _init)
     {
-        nod[p].tag1=1;
-        nod[p].tag2=0;
+        init(_init);
     }
-    //2.修改这里
-    void cal_lazy(ll p)
+    void init(ll _n, Info _v = Info())
     {
-        ll len=(nod[p].r-nod[p].l+1)%mod;
-        nod[p].sum2=((nod[p].tag1*nod[p].tag1%mod*nod[p].sum2%mod)%mod
-        +(nod[p].tag1*nod[p].tag2%mod*(len-1)%mod*nod[p].sum%mod)%mod
-        +((len-1)*(len)/2%mod*nod[p].tag2%mod*nod[p].tag2%mod)%mod)%mod;
-        nod[p].sum=(len*nod[p].tag2%mod+
-                    nod[p].tag1*nod[p].sum%mod)%mod;
+        init(std::vector<Info>(_n, _v));
     }
-    //3.修改这里
-    void union_lazy(ll fa,ll ch)
+    template<class T>
+    void init(std::vector<T> _init)
     {
-        ll tem1,tem2;
-        tem1=nod[fa].tag1*nod[ch].tag1%mod;
-        tem2=(nod[fa].tag1*nod[ch].tag2%mod+nod[fa].tag2)%mod;
-        nod[ch].tag1=tem1;
-        nod[ch].tag2=tem2;
-    }
-    //4.修改这里
-    void pushdown(ll p)
-    {
-        if(nod[p].tag1!=1||nod[p].tag2!=0)
+        n = _init.size();
+        info.assign(4 << std::__lg(n), Info());
+        tag.assign(4 << std::__lg(n), Tag());
+        auto build = [&](auto self, ll p, ll l, ll r)
         {
-            cal_lazy(p);
-            if(nod[p].l!=nod[p].r)
+            if (r - l == 1)
             {
-                union_lazy(p,lc);
-                union_lazy(p,rc);
+                info[p] = _init[l];
+                return;
             }
-            init_lazy(p);
-        }
+            ll m = l + r >> 1;
+            self(self, l(p), l, m);
+            self(self, r(p), m, r);
+            pull(p);
+        };
+        build(build, 1, 0, n);
     }
-    void build(ll p,ll l,ll r)
+    void pull(ll p)
     {
-        nod[p].l=l;
-        nod[p].r=r;
-        init_lazy(p);
-        if(l!=r)
+        info[p] = info[l(p)] + info[r(p)];
+    }
+    void apply(ll p, const Tag &v, ll len)
+    {
+        info[p].apply(v, len);
+        tag[p].apply(v);
+    }
+    void push(ll p, ll len)
+    {
+        apply(l(p), tag[p], len / 2);
+        apply(r(p), tag[p], len - len / 2);
+        tag[p] = Tag();
+    }
+    void modify(ll p, ll l, ll r, ll x, const Info &v)
+    {
+        if (r - l == 1)
         {
-            ll mid=l+r>>1;
-            build(lc,l,mid);
-            build(rc,mid+1,r);
-            pushup(p);
+    //        ll k=info[p].l;
+            info[p] = v;
+//            info[p].r=info[p].l= (k^v.l);
+            return;
         }
-        else nod[p].sum=a[l]%mod,mp[l]=p,nod[p].sum2=0;
-    }
-    ll sum(ll p,ll l,ll r)
-    {
-        pushdown(p);
-        if(nod[p].l==l&&nod[p].r==r) return nod[p].sum;
-        ll mid=nod[p].l+nod[p].r>>1;
-        if(r<=mid) return sum(lc,l,r);
-        else if(l>mid) return sum(rc,l,r);
-        else return sum(lc,l,mid)+sum(rc,mid+1,r);
-    }
-    ain sum2(ll p,ll l,ll r)
-    {
-        pushdown(p);
-        if(nod[p].l==l&&nod[p].r==r) return nod[p];
-        ll mid=nod[p].l+nod[p].r>>1;
-        if(r<=mid) return sum2(lc,l,r);
-        else if(l>mid) return sum2(rc,l,r);
-        else return sum2(lc,l,mid)+sum2(rc,mid+1,r);
-    }
-    void update(ll x,ll y)
-    {
-        x=mp[x];
-        nod[x].sum+=y;
-        while(x/=2) pushup(x);
-    }
-    void change(ll p,ll l,ll r,ll tag1,ll tag2)
-    {
-        pushdown(p);
-        if(nod[p].l==l&&nod[p].r==r)
+        int m = l + r >> 1;
+        if (x < m)
         {
-            nod[p].tag1=tag1%mod;
-            nod[p].tag2=tag2%mod;
-            return;;
-            
-        }
-        ll mid=nod[p].l+nod[p].r>>1;
-        if(r<=mid) change(lc,l,r,tag1,tag2);
-        else if(l>mid) change(rc,l,r,tag1,tag2);
-        else change(lc,l,mid,tag1,tag2),change(rc,mid+1,r,tag1,tag2);
-        pushup(p);
-    }
-};
-segtree tr;
-void solve()
-{
-    ll n,m,pe;
-    cin>>n>>m>>pe;
-    mod=pe;
-
-    for(ll i=1; i<=n; i++) cin>>a[i];
-    tr.build(1,1,n);
-    for(ll i=1; i<=m; i++)
-    {
-        ll op,l,r,v;
-        cin>>op;
-        if(op==1)
-        {
-            cin>>l>>r>>v;
-            tr.change(1,l,r,1,v);
-        }
-        else if(op==2)
-        {
-            cin>>l>>r>>v;
-            tr.change(1,l,r,v,0);
+            modify(l(p), l, m, x, v);
         }
         else
         {
-            cin>>l>>r;
-            cout<<tr.sum2(1,l,r).sum2<<'\n';
+            modify(r(p), m, r, x, v);
         }
-
+        pull(p);
     }
+    void modify(ll p, const Info &v)
+    {
+        modify(1, 0, n, p, v);
+    }
+    Info query(ll p, ll l, ll r, ll x, ll y)
+    {
+        if (l >= y or r <= x)
+        {
+            return Info();
+        }
+        if (l >= x and r <= y)
+        {
+            return info[p];
+        }
+        ll m = l + r >> 1;
+        push(p, r - l);
+        return query(l(p), l, m, x, y) + query(r(p), m, r, x, y);
+    }
+    Info query(ll l, ll r)
+    {
+        return query(1, 0, n, l, r);
+    }
+    void Apply(ll p, ll l, ll r, ll x, ll y, const Tag &v)
+    {
+        if (l >= y or r <= x)
+        {
+            return;
+        }
+        if (l >= x and r <= y)
+        {
+            //            push(p,r-l);
+            apply(p, v, r - l);
+            return;
+        }
+        ll m = l + r >> 1;
+        push(p, r - l);
+        Apply(l(p), l, m, x, y, v);
+        Apply(r(p), m, r, x, y, v);
+        pull(p);
+    }
+    void Apply(ll l, ll r, const Tag &v)
+    {
+        return Apply(1, 0, n, l, r, v);
+    }
+};
+
+
+
+void solve()
+{
+    ll n;
+    cin>>n;
+    vector<Info>a(n);
+    for(ll i=0;i<n;i++) cin>>a[i].sum;
+    LSGT<Info,Tag>seg(a);
+      
+//        for(ll j=0; j<n; j++) cout<<seg.query(j,j+1).l<<" "<<seg.query(j,j+1).r<<" ";
+//        cout<<'\n';
+//        for(ll i=0;i<n;i++) cout<<seg.query(i,i+1).l<<" ";
+//        cout<<'\n';
+    
 }
 signed main()
 {
-    ios::sync_with_stdio(false);cin.tie(0);cout.tie(0);
+    ios::sync_with_stdio(false);
+    cin.tie(0);
     ll tt;
-    cin>>tt;
-    while(tt--)
-    {
-        solve();
-    }
+    //  cin>>tt;
+    tt=1;
+    while(tt--)solve();
 }
+
+
